@@ -1,0 +1,80 @@
+<head>
+  <title>ASX Company Search</title>
+  <link rel="stylesheet" href="http://cdn.datatables.net/1.10.2/css/jquery.dataTables.min.css">
+  <script src="http://cdn.datatables.net/1.10.2/js/jquery.dataTables.min.js"></script>
+</head>
+
+<body>
+  <div class="container">
+    {{> hello}}
+  </div>
+  <div id="dvjson">
+  </div>
+</body>
+
+<template name="hello">
+  <!--<form class="form" role="form">-->
+  <div class="jumbotron">
+    <h2>Mike's ASX Company Search</h2>
+    <div class="form-group">
+      <label for="tickercodes">Ticker Codes</label>
+      <textarea class="form-control" rows="3" name="tickercodes" id="tickercodes" placeholder="enter ticker codes here, separated by commas e.g. TLS,CBA"></textarea>
+      <span class="help-block">Seperate ticker codes by commas e.g. TLS,CBA,NAB</span>
+      <button class="btn btn-primary btn-lg" id="tickerSearch"><i class="glyphicon glyphicon-search"></i> Search</button>
+      <a class="btn btn-info btn-lg" role="button" id="excel">Export to Excel &raquo;</a>
+    </div>
+    <!--  <p>You've pressed the button {{counter}} times.</p>-->
+  </div>
+  <!--</form>-->
+  {{#if company}}
+  <div class="row-fluid">
+    <h2>
+      Details
+    </h2>
+    {{#each company}}
+    <div class="col-xs-12 col-sm-4">
+      <table class="table table-striped table-bordered table-hover">
+        <tbody>
+          <tr><th>companyName</th><td>{{[companyName]}}</td></tr>
+          <tr><th>directors</th><td>{{[directors]}}</td></tr>
+          <tr><th>Issuer Code</th><td>{{[Issuer Code]}}</td></tr>
+          <tr><th>Securities</th><td>{{[Securities]}}</td></tr>
+          <tr><th>Official Listing Date</th><td>{{[Official Listing Date]}}</td></tr>
+          <tr><th>GICS Industry Group</th><td>{{[GICS Industry Group]}}</td></tr>
+          <tr><th>Exempt Foreign?</th><td>{{[Exempt Foreign?]}}</td></tr>
+          <tr><th>Internet Address</th><td>{{[Internet Address]}}</td></tr>
+          <tr><th>Registered Office Address</th><td>{{[Registered Office Address]}}</td></tr>
+          <tr><th>Head Office Telephone</th><td>{{[Head Office Telephone]}}</td></tr>
+          <tr><th>Head Office Fax</th><td>{{[Head Office Fax]}}</td></tr>
+          <tr><th>Share Registry</th><td>{{[Share Registry]}}</td></tr>
+          <tr><th>Share Registry Telephone</th><td>{{[Share Registry Telephone]}}</td></tr>
+          <tr><th>Company Secretary</th><td>{{[Company Secretary]}}</td></tr>
+          <tr><th>Principal Activities</th><td>{{[Principal Activities]}}</td></tr>    
+        </tbody>
+      </table>
+    </div>
+    {{/each}}
+  </div>
+  {{/if}}
+  <!-- Modal -->
+  <div class="modal fade" id="modalExcel" tabindex="-1" role="dialog" aria-labelledby="modalExcel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+          <h4 class="modal-title" id="myModalLabel">Download</h4>
+        </div>
+        <div class="modal-body" id="modalExcelDiv">
+          <p>Right-click the link below, and choose "Save As..." or "Download Linked File As...".</p>
+          <p>Make sure you specify ".xls" as the file extension.</p>
+          <br/>
+        </div>
+        <div class="modal-footer">
+          <p>Next time, use Google Chrome and you won't have to do this!</p>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</template>

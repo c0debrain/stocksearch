@@ -24,36 +24,47 @@
       <a class="btn btn-info btn-lg" role="button" id="excel">Export to Excel &raquo;</a>
     </div>
     <!--  <p>You've pressed the button {{counter}} times.</p>-->
+    <div class="progress">
+      <div class="progress-bar" role="progressbar" id="progressBar">
+
+      </div>
+    </div>    
   </div>
   <!--</form>-->
   {{#if company}}
-  <div class="row-fluid">
+  <div class="row-fluid center-block">
     <h2>
       Details
     </h2>
-    {{#each company}}
-    <div class="col-xs-12 col-sm-4">
-      <table class="table table-striped table-bordered table-hover">
-        <tbody>
-          <tr><th>companyName</th><td>{{[companyName]}}</td></tr>
-          <tr><th>directors</th><td>{{[directors]}}</td></tr>
-          <tr><th>Issuer Code</th><td>{{[Issuer Code]}}</td></tr>
-          <tr><th>Securities</th><td>{{[Securities]}}</td></tr>
-          <tr><th>Official Listing Date</th><td>{{[Official Listing Date]}}</td></tr>
-          <tr><th>GICS Industry Group</th><td>{{[GICS Industry Group]}}</td></tr>
-          <tr><th>Exempt Foreign?</th><td>{{[Exempt Foreign?]}}</td></tr>
-          <tr><th>Internet Address</th><td>{{[Internet Address]}}</td></tr>
-          <tr><th>Registered Office Address</th><td>{{[Registered Office Address]}}</td></tr>
-          <tr><th>Head Office Telephone</th><td>{{[Head Office Telephone]}}</td></tr>
-          <tr><th>Head Office Fax</th><td>{{[Head Office Fax]}}</td></tr>
-          <tr><th>Share Registry</th><td>{{[Share Registry]}}</td></tr>
-          <tr><th>Share Registry Telephone</th><td>{{[Share Registry Telephone]}}</td></tr>
-          <tr><th>Company Secretary</th><td>{{[Company Secretary]}}</td></tr>
-          <tr><th>Principal Activities</th><td>{{[Principal Activities]}}</td></tr>    
-        </tbody>
-      </table>
+    <div class="panel-group" id="accordion">
+
+      {{#each company}}
+      <hr/>
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <a data-toggle="collapse" data-parent="#accordion" href="#{{companyTicker}}">
+            <h4 class="panel-title">
+              {{companyName}}
+            </h4>
+          </a>
+        </div>
+        <div id="{{companyTicker}}" class="panel-collapse collapse">
+          <div class="panel-body">
+            <table class="table table-striped table-bordered table-hover">
+              <tbody>
+                {{#each companyProp}}
+                <tr>
+                  <th>{{[key]}}</th><td>{{[value]}}</td>
+                </tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {{/each}}
     </div>
-    {{/each}}
   </div>
   {{/if}}
   <!-- Modal -->

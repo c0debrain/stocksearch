@@ -22,7 +22,7 @@ if (Meteor.isClient) {
       return Session.get("ASXResults");
     },
     companyName: function () {
-      return this["ticker"];
+      return this["companyName"];
     },
     companyTicker: function () {
       return this["ticker"];

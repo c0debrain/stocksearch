@@ -19,9 +19,9 @@
     <div class="form-group">
       <label for="tickercodes">Ticker Codes</label>
       <textarea class="form-control" rows="3" name="tickercodes" id="tickercodes" placeholder="enter ticker codes here, separated by commas e.g. TLS,CBA"></textarea>
-      <span class="help-block">Seperate ticker codes by commas e.g. TLS,CBA,NAB</span>
+      <span class="help-block">For example, TLS,CBA,NAB</span>
       <button class="btn btn-primary btn-lg" id="tickerSearch"><i class="glyphicon glyphicon-search"></i> Search</button>
-      <a class="btn btn-info btn-lg" role="button" id="excel">Export to Excel &raquo;</a>
+      <a class="btn btn-info btn-lg" role="button" id="excel"><i class="glyphicon glyphicon-download-alt"></i> Export to Excel &raquo;</a>
     </div>
     <!--  <p>You've pressed the button {{counter}} times.</p>-->
     <div class="progress">
@@ -36,6 +36,7 @@
     <h2>
       Details
     </h2>
+    <small>Click the company name for more.</small>
     <div class="panel-group" id="accordion">
 
       {{#each company}}
@@ -44,7 +45,7 @@
         <div class="panel-heading">
           <a data-toggle="collapse" data-parent="#accordion" href="#{{companyTicker}}">
             <h4 class="panel-title">
-              {{companyName}}
+              {{companyTicker}} - {{companyName}}
             </h4>
           </a>
         </div>

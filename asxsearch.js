@@ -78,7 +78,7 @@ if (Meteor.isClient) {
                   updateProgress();
                   if (error || !(!!result)) {
                     console.log(error);
-                    toastr["error"]("There was an issue.");
+                    toastr["error"]("There was an issue. (" + tickersArray[i] + ")");
                   } else {
                     var ticker = result[1];
                     result = result[0];
@@ -87,9 +87,9 @@ if (Meteor.isClient) {
                     var responseJQuery = $(html);
                     var companyNameElem = responseJQuery.find("#company-information  h1")[0];
                     if (!!companyNameElem) {
-                      toastr["success"]("Great success!");
+                      toastr["success"]("From ASX for " + ticker,"Great success!");
                     } else {
-                      toastr["warning"]("Strange result. Please check your ticker.");
+                      toastr["warning"]("From ASX for: " + ticker,"Strange result");
                       return;
                     }
                     newObj.companyName = companyNameElem.innerText;
@@ -100,18 +100,7 @@ if (Meteor.isClient) {
                     for (var i = 0; i < companyDetailsHeadings.length; i++) {
                       newObj[companyDetailsHeadings[i].innerText] = companyDetailsValues[i].innerText;
                     }
-                    // find our ticker's object in the session if it's there.
-                    var ASXResults = Session.get("ASXResults") || [];
-                    var sessionObj = _.findWhere(ASXResults, {"ticker": ticker}) || {};
-                    ASXResults = _.without(ASXResults, sessionObj);
-
-                    sessionObj = _.extend(sessionObj, newObj);
-                    ASXResults.push(sessionObj);
-
-                    Session.set("ASXResults", ASXResults);
-
-
-
+                    updateSessionObjectForTicker(newObj, ticker); // update the session object
                   }
                 }
         );
@@ -122,14 +111,15 @@ if (Meteor.isClient) {
                   updateProgress();
                   if (error || !(!!result)) {
                     console.log(error);
-                    toastr["error"]("There was an issue.");
+                    toastr["error"]("There was an issue. (" + tickersArray[i] + ")");
+
                   } else {
                     var ticker = result[1];
                     result = result[0];
                     var newObj = {"ticker": ticker};
                     var responseJSON = JSON.parse(result.content);
                     if (!!responseJSON) {
-                      toastr["success"]("Yahoo!");
+                      toastr["success"]("From Yahoo! for: " + ticker, "Great Success!");
                       var value;
                       for (var key in responseJSON.query.results.stats) {
 
@@ -145,16 +135,9 @@ if (Meteor.isClient) {
                         }
                         newObj[key] = value;
                       }
-                      var ASXResults = Session.get("ASXResults") || [];
-                      // find our ticker's object in the session if it's there.
-                      var sessionObj = _.findWhere(ASXResults, {"ticker": ticker}) || {};
-                      ASXResults = _.without(ASXResults, sessionObj);
-                      sessionObj = _.extend(sessionObj, newObj);
-                      ASXResults.push(sessionObj);
-
-                      Session.set("ASXResults", ASXResults);
+                      updateSessionObjectForTicker(newObj, ticker); // update our session object.
                     } else {
-                      toastr["warning"]("Strange resultfrom yahoo. Please check your ticker.");
+                      toastr["warning"]("From Yahoo! for: " + ticker, "Strange result");
                       return;
                     }
 
@@ -213,6 +196,17 @@ if (Meteor.isClient) {
 
 
   });
+  function updateSessionObjectForTicker(newObj, ticker) {
+    // find our ticker's object in the session if it's there.
+    var ASXResults = Session.get("ASXResults") || [];
+    var sessionObj = _.findWhere(ASXResults, {"ticker": ticker}) || {};
+    ASXResults = _.without(ASXResults, sessionObj);
+
+    sessionObj = _.extend(sessionObj, newObj);
+    ASXResults.push(sessionObj);
+
+    Session.set("ASXResults", ASXResults);
+  }
 }
 
 

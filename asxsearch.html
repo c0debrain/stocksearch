@@ -20,6 +20,14 @@
       <label for="tickercodes">Ticker Codes</label>
       <textarea class="form-control" rows="3" name="tickercodes" id="tickercodes" placeholder="enter ticker codes here, separated by commas e.g. TLS,CBA"></textarea>
       <span class="help-block">For example, TLS,CBA,NAB</span>
+    </div>
+    <div class="form-group">
+      <label for="browserOutput">Display Results in Browser</label>
+      <input type="checkbox" id="browserOutput" name="browserOutput"/>
+      <span class="help-block">Leave unchecked if you have a large number of stocks, for efficiency reasons</span>
+    </div>
+    <div class="form-group">
+      
       <button class="btn btn-primary btn-lg" id="tickerSearch"><i class="glyphicon glyphicon-search"></i> Search</button>
       <a class="btn btn-info btn-lg" role="button" id="excel"><i class="glyphicon glyphicon-download-alt"></i> Export to Excel &raquo;</a>
     </div>
@@ -31,42 +39,44 @@
     </div>    
   </div>
   <!--</form>-->
-  {{#if company}}
-  <div class="row-fluid center-block">
-    <h2>
-      Details
-    </h2>
-    <small>Click the company name for more.</small>
-    <div class="panel-group" id="accordion">
+  {{#if browserOutput}}
+    {{#if company}}
+    <div class="row-fluid center-block">
+      <h2>
+        Details
+      </h2>
+      <small>Click the company name for more.</small>
+      <div class="panel-group" id="accordion">
 
-      {{#each company}}
-      <hr/>
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <a data-toggle="collapse" data-parent="#accordion" href="#{{companyTicker}}">
-            <h4 class="panel-title">
-              {{companyTicker}} - {{companyName}}
-            </h4>
-          </a>
-        </div>
-        <div id="{{companyTicker}}" class="panel-collapse collapse">
-          <div class="panel-body">
-            <table class="table table-striped table-bordered table-hover">
-              <tbody>
-                {{#each companyProp}}
-                <tr>
-                  <th>{{[key]}}</th><td>{{[value]}}</td>
-                </tr>
-                {{/each}}
-              </tbody>
-            </table>
+        {{#each company}}
+        <hr/>
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <a data-toggle="collapse" data-parent="#accordion" href="#{{companyTicker}}">
+              <h4 class="panel-title">
+                {{companyTicker}} - {{companyName}}
+              </h4>
+            </a>
+          </div>
+          <div id="{{companyTicker}}" class="panel-collapse collapse">
+            <div class="panel-body">
+              <table class="table table-striped table-bordered table-hover">
+                <tbody>
+                  {{#each companyProp}}
+                  <tr>
+                    <th>{{[key]}}</th><td>{{[value]}}</td>
+                  </tr>
+                  {{/each}}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
 
-      {{/each}}
+        {{/each}}
+      </div>
     </div>
-  </div>
+    {{/if}}
   {{/if}}
   <!-- Modal -->
   <div class="modal fade" id="modalExcel" tabindex="-1" role="dialog" aria-labelledby="modalExcel" aria-hidden="true">

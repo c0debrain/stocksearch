@@ -1,6 +1,17 @@
 
 if (Meteor.isClient) {
-  var progressNumTasks = 0, progressTasksCompleted = 0;
+  var progressNumTasks = 0, progressTasksCompleted = 0, browserOutput = false;
+  var browserOutputDependency = new Tracker.Dependency;
+
+  var getBrowserOutput = function () {
+    browserOutputDependency.depend()
+    return browserOutput;
+  };
+
+  var setbrowserOutput = function (w) {
+    browserOutput = w;
+    browserOutputDependency.changed();
+  };
 
   Meteor.startup(function () {
     $("#excel").addClass("hidden");
@@ -17,6 +28,9 @@ if (Meteor.isClient) {
   Template.hello.helpers({
     counter: function () {
       return Session.get("counter");
+    },
+    browserOutput: function () {
+      return getBrowserOutput();
     },
     company: function () {
       return Session.get("ASXResults");
@@ -54,6 +68,9 @@ if (Meteor.isClient) {
   }
 
   Template.hello.events({
+    'change #browserOutput': function (evt) {
+      setbrowserOutput(evt.target.checked);
+    },
     'click button': function () {
       Session.set("ASXResults", []);
 
@@ -87,9 +104,9 @@ if (Meteor.isClient) {
                     var responseJQuery = $(html);
                     var companyNameElem = responseJQuery.find("#company-information  h1")[0];
                     if (!!companyNameElem) {
-                      toastr["success"]("From ASX for " + ticker,"Great success!");
+                      toastr["success"]("From ASX for " + ticker, "Great success!");
                     } else {
-                      toastr["warning"]("From ASX for: " + ticker,"Strange result");
+                      toastr["warning"]("From ASX for: " + ticker, "Strange result");
                       return;
                     }
                     newObj.companyName = companyNameElem.innerText;
@@ -104,46 +121,76 @@ if (Meteor.isClient) {
                   }
                 }
         );
-        Meteor.call("getYahooFinanceData",
-                tickersArray[i],
-                function (error, result) {
-                  progressTasksCompleted++;
-                  updateProgress();
-                  if (error || !(!!result)) {
-                    console.log(error);
-                    toastr["error"]("There was an issue. (" + tickersArray[i] + ")");
+        $.ajax({url: "https://query.yahooapis.com/v1/public/yql?q=SELECT%20*%20FROM%20yahoo.finance.keystats%20WHERE%20symbol%3D'" + tickersArray[i] + ".AX'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback=", success: function (result) {
+            progressTasksCompleted++;
+            updateProgress();
+            if (result.query.results) {
+              var ticker = result.query.results.stats.symbol.split(".")[0];
+              var newObj = {"ticker": ticker};
+              if (!!result) {
+                toastr["success"]("From Yahoo! for: " + ticker, "Great Success!");
+                var value;
+                for (var key in result.query.results.stats) {
 
-                  } else {
-                    var ticker = result[1];
-                    result = result[0];
-                    var newObj = {"ticker": ticker};
-                    var responseJSON = JSON.parse(result.content);
-                    if (!!responseJSON) {
-                      toastr["success"]("From Yahoo! for: " + ticker, "Great Success!");
-                      var value;
-                      for (var key in responseJSON.query.results.stats) {
-
-                        var tempval = responseJSON.query.results.stats[key];
-                        if (typeof tempval === "object") {
-                          if (tempval.content) {
-                            value = tempval.content;
-                          } else {
-                            value = JSON.stringify(tempval);
-                          }
-                        } else {
-                          value = tempval;
-                        }
-                        newObj[key] = value;
-                      }
-                      updateSessionObjectForTicker(newObj, ticker); // update our session object.
+                  var tempval = result.query.results.stats[key];
+                  if (typeof tempval === "object") {
+                    if (tempval.content) {
+                      value = tempval.content;
                     } else {
-                      toastr["warning"]("From Yahoo! for: " + ticker, "Strange result");
-                      return;
+                      value = JSON.stringify(tempval);
                     }
-
+                  } else {
+                    value = tempval;
                   }
+                  newObj[key] = value;
                 }
-        );
+                updateSessionObjectForTicker(newObj, ticker); // update our session object.
+              }
+            } else {
+              toastr["warning"]("From Yahoo! for: " + ticker, "Strange result");
+              return;
+            }
+          }});
+//        Meteor.call("getYahooFinanceData",
+//                tickersArray[i],
+//                function (error, result) {
+//                  progressTasksCompleted++;
+//                  updateProgress();
+//                  if (error || !(!!result)) {
+//                    console.log(error);
+//                    toastr["error"]("There was an issue. (" + tickersArray[i] + ")");
+//
+//                  } else {
+//                    var ticker = result[1];
+//                    result = result[0];
+//                    var newObj = {"ticker": ticker};
+//                    var responseJSON = JSON.parse(result.content);
+//                    if (!!responseJSON) {
+//                      toastr["success"]("From Yahoo! for: " + ticker, "Great Success!");
+//                      var value;
+//                      for (var key in responseJSON.query.results.stats) {
+//
+//                        var tempval = responseJSON.query.results.stats[key];
+//                        if (typeof tempval === "object") {
+//                          if (tempval.content) {
+//                            value = tempval.content;
+//                          } else {
+//                            value = JSON.stringify(tempval);
+//                          }
+//                        } else {
+//                          value = tempval;
+//                        }
+//                        newObj[key] = value;
+//                      }
+//                      updateSessionObjectForTicker(newObj, ticker); // update our session object.
+//                    } else {
+//                      toastr["warning"]("From Yahoo! for: " + ticker, "Strange result");
+//                      return;
+//                    }
+//
+//                  }
+//                }
+//        );
       }
     },
     // ========= build a spreadsheet for download
@@ -154,14 +201,15 @@ if (Meteor.isClient) {
         return;
       }
       // build up an array of column names from our first data item.
-      var firstCompany = ASXResults[0],
-              columns = [],
-              i;
-      for (i in firstCompany) {
-        if (firstCompany.hasOwnProperty(i)) {
-          columns.push({headertext: i, datafield: i, ishidden: false});
-        }
+      var columns = {}, i;
+      for (i = 0; i < ASXResults.length; i++) {
+        columns = _.extend(columns, ASXResults[i]);
       }
+      columns = _.keys(columns);
+      columns = _.map(columns, function (a, b) {
+        return {headertext: a, datafield: a, ishidden: false};
+      })
+
 
       var d = new Date();
       var t = d.toTimeString().substring(0, 8).replace(/:/g, "-"); // time component.

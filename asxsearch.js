@@ -177,6 +177,12 @@ if (Meteor.isClient) {
               newObj.companyName = companyName;
 
               _.extend(newObj,result);
+              // get the primary share info out
+              var primaryShareInfo = newObj["primary_share"];
+              newObj = _.omit(newObj, "primary_share");
+              // add the primary share stuff to the top-level object
+              newObj = _.extend(newObj, primaryShareInfo);
+
               updateSessionObjectForTicker(newObj, ticker); // update the session object
             }
           }

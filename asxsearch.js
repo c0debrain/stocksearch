@@ -1,29 +1,26 @@
-
 if (Meteor.isClient) {
-  var progressNumTasks = 0, progressTasksCompleted = 0, browserOutput = false;
-  var browserOutputDependency = new Tracker.Dependency;
+  var progressNumTasks = 0,
+    progressTasksCompleted = 0,
+    browserOutput = false,
+    browserOutputDependency = new Tracker.Dependency,
+    getBrowserOutput = function () {
+      browserOutputDependency.depend()
+      return browserOutput;
+    }, setbrowserOutput = function (w) {
+      browserOutput = w;
+      browserOutputDependency.changed();
+    },
+    spinner = new Spinner();
 
-  var getBrowserOutput = function () {
-    browserOutputDependency.depend()
-    return browserOutput;
-  };
-
-  var setbrowserOutput = function (w) {
-    browserOutput = w;
-    browserOutputDependency.changed();
-  };
 
   Meteor.startup(function () {
     $("#excel").addClass("hidden");
   });
 
-  var spinner = new Spinner();
 
   // counter starts at 0
   Session.setDefault("counter", 0);
   Session.setDefault("ASXResults", []);
-
-  console.log(Template.hello);
 
   Template.hello.helpers({
     counter: function () {
@@ -43,15 +40,84 @@ if (Meteor.isClient) {
     },
     companyProp: function () {
 
+      function renderObjectToHTMLTable(val) {
+        var tableHTML = '<table class="table table-striped table-bordered"><thead><tr>';
+        var keys = _.keys(val);
+        _.each(keys, function (element, index, list) {
+          tableHTML += '<td>' + element + '</td>';
+        }, this);
+        tableHTML += '</tr></thead>';
+        tableHTML += '<tbody>';
+        _.each(keys, function (element, index, list) {
+          var renderItem = val[element];
+          if (_.isArray(renderItem)) {
+            renderItem = renderArrayToHTMLTable(val[element]);
+          } else if (_.isObject(renderItem)) {
+            renderItem = renderObjectToHTMLTable(val[element]);
+          }
+          tableHTML += '<td>' + renderItem + '</td>';
+        }, this);
+        tableHTML += '</tbody>';
+        tableHTML += '</table>';
+        return tableHTML;
+      }
+
+      function renderArrayToHTMLTable(val) {
+        if (val.length > 0) {
+          var columnNames;
+          var tableHTML = '<table class="table table-striped table-bordered">';
+          if (_.isObject(val[0])) {
+            tableHTML += "<thead><tr>";
+            columnNames = _.keys(val[0]);
+
+            _.each(columnNames, function (element, index, list) {
+              tableHTML += '<th>' + element + '</th>';
+            }, this);
+            tableHTML += "</tr></thead>";
+            tableHTML += '<tbody>';
+            _.each(val, function (obj) { // for each object in our array
+              tableHTML += "<tr>";
+              _.each(columnNames, function(colName){
+                tableHTML += "<td>" + this[colName] + "</td>";
+              }, obj);
+              tableHTML += "</tr>";
+            }, this);
+            tableHTML += '</tbody>';
+          } else {
+            // we have an array of non-object items. Just print them in one row per item.
+            tableHTML += '<tbody>';
+            _.each(val, function (obj) { // for each object in our array
+              tableHTML += "<tr>";
+              tableHTML += "<td>" + obj + "</td>";
+              tableHTML += "</tr>";
+            }, this);
+            tableHTML += '</tbody>';
+          }
+          tableHTML += '</table>';
+          return tableHTML;
+        }
+        return null;
+      }
+
+
       var props = _.map(this,
-              function (val, key) {
-                var obj = {};
-                obj["key"] = key;
-                obj["value"] = val;
+        function (val, key) {
+          var obj = {};
+          obj["key"] = key;
+          var tableHTML;
+          if (_.isArray(val)) {
+            // we have an array of objects. Get the keys from the first one.
+            tableHTML = renderArrayToHTMLTable(val);
+            obj["value"] = tableHTML;
+          } else if (_.isObject(val)) {
+            tableHTML = renderObjectToHTMLTable(val);
+            obj["value"] = tableHTML;
+          } else {
+            obj["value"] = val;
+          }
 
-                return obj;
-              });
-
+          return obj;
+        });
       return props;
     }
   });
@@ -89,39 +155,35 @@ if (Meteor.isClient) {
       for (i = 0; i < tickersArray.length; i++) {
         spinner.spin(document.body);
         Meteor.call("getASXData",
-                tickersArray[i],
-                function (error, result) {
-                  progressTasksCompleted++;
-                  updateProgress();
-                  if (error || !(!!result)) {
-                    console.log(error);
-                    toastr["error"]("There was an issue. (" + tickersArray[i] + ")");
-                  } else {
-                    var ticker = result[1];
-                    result = result[0];
-                    var newObj = {"ticker": ticker};
-                    var html = $.parseHTML(result.content);
-                    var responseJQuery = $(html);
-                    var companyNameElem = responseJQuery.find("#company-information  h1")[0];
-                    if (!!companyNameElem) {
-                      toastr["success"]("From ASX for " + ticker, "Great success!");
-                    } else {
-                      toastr["warning"]("From ASX for: " + ticker, "Strange result");
-                      return;
-                    }
-                    newObj.companyName = companyNameElem.innerText;
-                    newObj.directors = responseJQuery.find("#directors tbody tr td")[0].innerText;
-                    // loop through and add company information
-                    var companyDetailsHeadings = responseJQuery.find(".company-details tr th");
-                    var companyDetailsValues = responseJQuery.find(".company-details tr td");
-                    for (var i = 0; i < companyDetailsHeadings.length; i++) {
-                      newObj[companyDetailsHeadings[i].innerText] = companyDetailsValues[i].innerText;
-                    }
-                    updateSessionObjectForTicker(newObj, ticker); // update the session object
-                  }
-                }
+          tickersArray[i],
+          function (error, result) {
+            progressTasksCompleted++;
+            updateProgress();
+            if (error || !(!!result)) {
+              console.log(error);
+              toastr["error"]("There was an issue. (" + tickersArray[i] + ")");
+            } else {
+              var ticker = result[1];
+              result = result[0];
+              var newObj = {"ticker": ticker};
+
+              var companyName = result.name_full;
+              if (!!companyName) {
+                toastr["success"]("From ASX for " + ticker, "Great success!");
+              } else {
+                toastr["warning"]("From ASX for: " + ticker, "Strange result");
+                return;
+              }
+              newObj.companyName = companyName;
+
+              _.extend(newObj,result);
+              updateSessionObjectForTicker(newObj, ticker); // update the session object
+            }
+          }
         );
-        $.ajax({url: "https://query.yahooapis.com/v1/public/yql?q=SELECT%20*%20FROM%20yahoo.finance.keystats%20WHERE%20symbol%3D'" + tickersArray[i] + ".AX'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback=", success: function (result) {
+        $.ajax({
+          url: "https://query.yahooapis.com/v1/public/yql?q=SELECT%20*%20FROM%20yahoo.finance.keystats%20WHERE%20symbol%3D'" + tickersArray[i] + ".AX'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback=",
+          success: function (result) {
             progressTasksCompleted++;
             updateProgress();
             if (result.query.results) {
@@ -150,7 +212,8 @@ if (Meteor.isClient) {
               toastr["warning"]("From Yahoo! for: " + ticker, "Strange result");
               return;
             }
-          }});
+          }
+        });
 //        Meteor.call("getYahooFinanceData",
 //                tickersArray[i],
 //                function (error, result) {
@@ -242,7 +305,6 @@ if (Meteor.isClient) {
     }
 
 
-
   });
   function updateSessionObjectForTicker(newObj, ticker) {
     // find our ticker's object in the session if it's there.
@@ -262,16 +324,33 @@ if (Meteor.isServer) {
   Meteor.startup(function () {
 
   });
-  Meteor.methods({getASXData: function (ticker) {
+  Meteor.methods({
+    getASXData: function (ticker) {
       try {
-        var result = HTTP.get("http://www.asx.com.au/asx/research/companyInfo.do?by=asxCode&asxCode=" + ticker, null);
+        var resultJSON = HTTP.get("http://data.asx.com.au/data/1/company/" + ticker + "?fields=primary_share,latest_annual_reports,last_dividend,primary_share.indices", null);
+        var directorsJSON = HTTP.get("http://data.asx.com.au/data/1/company/" + ticker + "/people");
+        var result;
+        try {
+          result = resultJSON.data;
+          var directorsData = directorsJSON.data;
+          result.directors = directorsData.directors;
+        } catch (e) {
+          console.log("error parsing JSON for..." + ticker);
+          //console.error(e);
+          console.log("resultJSON was:");
+          console.log(resultJSON);
+          console.log("directorsJSON was:");
+          console.log(directorsJSON);
+        }
         return [result, ticker];
       } catch (e) {
         // Got a network error, time-out or HTTP error in the 400 or 500 range.
         return false;
       }
-    }});
-  Meteor.methods({getYahooFinanceData: function (ticker) {
+    }
+  });
+  Meteor.methods({
+    getYahooFinanceData: function (ticker) {
       try {
         var result = HTTP.get("https://query.yahooapis.com/v1/public/yql?q=SELECT%20*%20FROM%20yahoo.finance.keystats%20WHERE%20symbol%3D'" + ticker + ".AX'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback=", null);
         return [result, ticker];
@@ -279,5 +358,6 @@ if (Meteor.isServer) {
         // Got a network error, time-out or HTTP error in the 400 or 500 range.
         return false;
       }
-    }});
+    }
+  });
 }

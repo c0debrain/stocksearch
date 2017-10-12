@@ -1,0 +1,24 @@
+{
+  "name": "stocksearch",
+  "version": "1.0.0",
+  "description": "",
+  "main": "asxsearch.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://cunneen@github.com/cunneen/stocksearch.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cunneen/stocksearch/issues"
+  },
+  "homepage": "https://github.com/cunneen/stocksearch#readme",
+  "dependencies": {
+    "babel-runtime": "^6.26.0",
+    "bcrypt": "^1.0.3",
+    "yahoo-finance": "^0.3.3"
+  }
+}
